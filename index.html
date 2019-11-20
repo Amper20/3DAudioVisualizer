@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>3D vizualizer</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+			.buttonGray {
+			background-color: #808080;
+			color: black;
+			border: 2px solid #000000;
+			border-radius: 10px;
+			position: absolute;
+			display: block;
+			z-index: 99;
+			top: 5px;
+			}
+			.buttonGray:hover {background-color: white;}
+        </style>       
+	</head>
+	<body>
+        <div id="menu">
+            <button id="play" class = "buttonGray" style="height:40px;width:80px; left:5px" >Play</button>
+            <button id="pause" class = "buttonGray" style="height:40px;width:80px; left:90px;" >Pause</button>
+            <select id="selector" class = "buttonGray" style="height:40px;width:200px; left:175px" >
+                <option value="daSong.mp3"> Stayin </option>
+                <option value="satisfaction.mp3"> Satisfaction </option>
+				<option value="ugotdat.mp3"> U Got Dat </option>
+                <option value="rickroll.mp3"> Nebunia lui salam </option>
+            </select>
+            <select id="mode" class = "buttonGray" style="height:40px;width:200px;left:380px" >
+                <option value="cubes">Mode 1: The Cubes</option>
+                <option value="points">Mode 2: The Dots</option>
+                <option value="mushroom">Mode 3: Mushrooms</option>
+            </select>
+        </div>
+
+		<script type="x-shader/x-vertex" id="vertexshader">
+
+			attribute float scale;
+
+			void main() {
+
+				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+
+				gl_PointSize = scale * ( 300.0 / - mvPosition.z );
+
+				gl_Position = projectionMatrix * mvPosition;
+
+			}
+
+		</script>
+
+		<script type="x-shader/x-fragment" id="fragmentshader">
+
+			uniform vec3 color;
+
+			void main() {
+
+				if ( length( gl_PointCoord - vec2( 0.5, 0.5 ) ) > 0.475 ) discard;
+
+				gl_FragColor = vec4( color, 1.0 );
+
+			}
+
+		</script>
+
+		<script id="vshaderpsyh" type="x-shader/x-vertex">
+			precision highp float;
+			uniform mat4 modelViewMatrix;
+			uniform mat4 projectionMatrix;
+			uniform float time;
+	
+			attribute vec3 position;
+			attribute vec2 uv;
+			attribute vec3 translate;
+	
+			varying vec2 vUv;
+			varying float vScale;
+	
+			void main() {
+	
+				vec4 mvPosition = modelViewMatrix * vec4( translate, 1.0 );
+				vec3 trTime = vec3(translate.x + time,translate.y + time,translate.z + time);
+				float scale =  sin( trTime.x * 2.1 ) + sin( trTime.y * 3.2 ) + sin( trTime.z * 4.3 );
+				vScale = scale;
+				scale = scale * 10.0 + 10.0;
+				mvPosition.xyz += position * scale;
+				vUv = uv;
+				gl_Position = projectionMatrix * mvPosition;
+	
+			}
+		</script>
+		<script id="fshaderpsyh" type="x-shader/x-fragment">
+			precision highp float;
+	
+			uniform sampler2D map;
+	
+			varying vec2 vUv;
+			varying float vScale;
+	
+			// HSL to RGB Convertion helpers
+			vec3 HUEtoRGB(float H){
+				H = mod(H,1.0);
+				float R = abs(H * 6.0 - 3.0) - 1.0;
+				float G = 2.0 - abs(H * 6.0 - 2.0);
+				float B = 2.0 - abs(H * 6.0 - 4.0);
+				return clamp(vec3(R,G,B),0.0,1.0);
+			}
+	
+			vec3 HSLtoRGB(vec3 HSL){
+				vec3 RGB = HUEtoRGB(HSL.x);
+				float C = (1.0 - abs(2.0 * HSL.z - 1.0)) * HSL.y;
+				return (RGB - 0.5) * C + HSL.z;
+			}
+	
+			void main() {
+				vec4 diffuseColor = texture2D( map, vUv );
+				gl_FragColor = vec4( diffuseColor.xyz * HSLtoRGB(vec3(vScale/5.0, 1.0, 0.5)), diffuseColor.w );
+	
+				if ( diffuseColor.w < 0.5 ) discard;
+			}
+		</script>
+		
+        <script id="fragmentShader" type="x-shader/x-fragment" src="js\fragment.frag"></script>
+        <script id="vertexShader" type="x-shader/x-vertex" src="js\shader.vert"></script>
+        <script src="js/three.js"></script>
+        <script src="js/OrbitControls.js"></script>
+        <script src="js/app.js"></script>
+
+	</body>
+</html>
